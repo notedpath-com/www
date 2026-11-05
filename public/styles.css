@@ -1,0 +1,42 @@
+@font-face{font-family:'Inter';src:url('/fonts/inter-latin-wght-normal.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:swap}
+body{margin:0;background:#000}
+a{color:#F5F5F7;text-decoration:none}a:hover{color:#FFFFFF}
+.np-anim .rise{animation:np-rise 1.2s cubic-bezier(.2,.7,.1,1) both}
+.np-anim .d1{animation-delay:.15s}.np-anim .d2{animation-delay:.4s}.np-anim .d3{animation-delay:.7s}.np-anim .d4{animation-delay:.95s}.np-anim .d5{animation-delay:1.2s}
+.np-anim .draw{stroke-dasharray:1;animation:np-draw 2.8s cubic-bezier(.65,0,.35,1) .9s both}
+.np-anim .pop{animation:np-pop .6s cubic-bezier(.3,1.6,.5,1) both}
+.np-anim .pop1{animation-delay:1.9s}.np-anim .pop2{animation-delay:2.7s}
+@keyframes np-rise{from{opacity:0;transform:translateY(40px);filter:blur(14px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes np-draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@keyframes np-pop{from{opacity:0;transform:scale(0)}to{opacity:1;transform:scale(1)}}
+@keyframes np-sv{from{opacity:0;transform:translateY(90px) scale(.94)}to{opacity:1;transform:none}}
+@keyframes np-light{from{color:#2C2C2E}to{color:#F5F5F7}}
+@keyframes np-zoom{from{opacity:0;transform:scale(1.35);letter-spacing:.04em}to{opacity:1;transform:none;letter-spacing:-.045em}}
+.pop{transform-box:fill-box;transform-origin:center}
+@supports (animation-timeline: view()){
+.np-anim .sv{animation:np-sv linear both;animation-timeline:view();animation-range:entry 5% cover 35%}
+.np-anim .light{animation:np-light linear both;animation-timeline:view();animation-range:entry 30% cover 50%}
+.np-anim .zoom{animation:np-zoom linear both;animation-timeline:view();animation-range:entry 0% cover 45%}
+/* The page ends here, so these can never scroll far enough to reach a cover range. */
+.np-anim #contact .sv,.np-anim #contact .zoom{animation-range:entry 0% entry 100%}
+}
+@media (prefers-reduced-motion: reduce){.np-anim *{animation:none !important}}
+.dot-still{display:none}
+@media (prefers-reduced-motion: reduce){.dot-moving{display:none}.dot-still{display:block}}
+.card{background:#111113;border:1px solid rgba(255,255,255,0.06);border-radius:28px;padding:40px;min-height:340px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;gap:40px;color:#F5F5F7;transition:border-color .2s}
+.card:hover,.card:focus-visible{border-color:rgba(255,255,255,0.28)}
+.card-body{display:flex;flex-direction:column;gap:12px}
+.card-kind{margin:0;font-size:13px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:#A1A1A6}
+.card-name{margin:0;font-size:32px;line-height:1.1;letter-spacing:-0.025em;font-weight:700}
+.card-text{margin:0;font-size:17px;line-height:1.5;color:#A1A1A6}
+.card-host{margin:0;font-size:14px;color:#7DA2FF;overflow-wrap:anywhere}
+.site-footer-links{display:flex;gap:20px;flex-wrap:wrap}
+.site-footer-links a{color:#A1A1A6}
+.site-footer-links a:hover{color:#FFFFFF}
+.legal{max-width:720px;margin:0 auto;padding:96px 24px 120px;box-sizing:border-box;font-size:17px;line-height:1.6;color:#D2D2D7}
+.legal h1{margin:0 0 12px;font-size:clamp(40px,6vw,64px);line-height:1.05;letter-spacing:-0.035em;font-weight:700;color:#F5F5F7}
+.legal h2{margin:48px 0 12px;font-size:24px;letter-spacing:-0.015em;font-weight:700;color:#F5F5F7}
+.legal p,.legal ul{margin:0 0 16px}
+.legal li{margin-bottom:8px}
+.legal a{color:#7DA2FF}
+.legal .effective{color:#A1A1A6;font-size:15px}
