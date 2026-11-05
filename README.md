@@ -17,6 +17,12 @@ CSS with no build step and no JavaScript.
   embeds, or remote fonts, update `public/privacy/index.html` and check whether
   you now need a consent banner.
 
+## Deploy
+
+A push to `main` runs the tests, then `.github/workflows/pages.yml` publishes
+`public/` to GitHub Pages. The custom domain is set in **Settings > Pages**, not
+in a `CNAME` file, because Actions deployments ignore that file.
+
 ## Run
 
     python3 -m http.server --directory public
