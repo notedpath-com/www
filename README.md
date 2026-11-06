@@ -7,8 +7,8 @@ CSS with no build step and no JavaScript.
 
 - `public/` is the site root. Deploy this folder.
 - `test/site.test.mjs` checks the rules below.
-- `public/icon.svg` is the source for every icon (the nav logo). The `.ico`
-  and `.png` files are rendered from it; regenerate them if it changes.
+- `brand/` holds the logo masters and `icons.mjs`, which renders every icon in
+  `public/` from them. It is not deployed. Run it again if the logo changes.
 
 ## Rules
 
