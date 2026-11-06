@@ -4,8 +4,16 @@ body{margin:0;background:#000}
    the wrapper must stay transparent or it paints right over them. */
 .aurora{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
 .glow{position:absolute;display:block;border-radius:50%;will-change:transform}
-.g1{width:72vmax;height:72vmax;top:-26vmax;left:-22vmax;background:radial-gradient(circle closest-side,rgba(125,162,255,.20),rgba(125,162,255,0))}
-.g2{width:62vmax;height:62vmax;bottom:-26vmax;right:-22vmax;background:radial-gradient(circle closest-side,rgba(125,162,255,.13),rgba(125,162,255,0))}
+.g1{width:72vmax;height:72vmax;top:-26vmax;left:-22vmax;background:radial-gradient(circle closest-side,rgba(49,193,253,.20),rgba(49,193,253,0))}
+.g2{width:62vmax;height:62vmax;bottom:-26vmax;right:-22vmax;background:radial-gradient(circle closest-side,rgba(49,193,253,.13),rgba(49,193,253,0))}
+/* The header is sticky, so once the page scrolls under it the links need
+   something behind them. At the top of the page there is nothing to hide, so
+   the script takes the backdrop away and the logo and links sit straight on
+   the page. Frosted is the resting state: with no script the header keeps it,
+   and content can never scroll under bare links. */
+.site-header{position:sticky;top:0;z-index:10;background:rgba(0,0,0,.72);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid rgba(255,255,255,0.08)}
+.np-js .site-header{transition:background-color .3s ease,border-color .3s ease}
+.np-js .site-header:not(.stuck){background:transparent;border-bottom-color:transparent;backdrop-filter:none;-webkit-backdrop-filter:none}
 /* No lone word on a last line. The browser pulls one down instead. */
 p{text-wrap:pretty}
 a{color:#F5F5F7;text-decoration:none}a:hover{color:#FFFFFF}
@@ -27,7 +35,7 @@ a{color:#F5F5F7;text-decoration:none}a:hover{color:#FFFFFF}
    <path>'s own dash offset. The viewBox carries a 30 unit margin so the end
    cap, its glow and the dot stay inside the box the wipe clips to. */
 .path-link{width:100%;max-width:1260px;margin:16px auto 0}
-.path-link svg{display:block;width:100%;height:auto;overflow:visible;filter:drop-shadow(0 0 14px #7DA2FF)}
+.path-link svg{display:block;width:100%;height:auto;overflow:visible;filter:drop-shadow(0 0 14px #31C1FD)}
 /* Revealed by motion.js, which adds np-js to the page and in to each element
    as it arrives. Every rule here needs np-js, so with no script nothing is
    ever hidden and the page simply renders finished.
@@ -53,7 +61,7 @@ a{color:#F5F5F7;text-decoration:none}a:hover{color:#FFFFFF}
 .card-kind{margin:0;font-size:13px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:#A1A1A6}
 .card-name{margin:0;font-size:32px;line-height:1.1;letter-spacing:-0.025em;font-weight:700}
 .card-text{margin:0;font-size:17px;line-height:1.5;color:#A1A1A6}
-.card-cta{margin:auto 0 0;display:inline-flex;align-items:center;gap:7px;font-size:15px;font-weight:600;color:#7DA2FF}
+.card-cta{margin:auto 0 0;display:inline-flex;align-items:center;gap:7px;font-size:15px;font-weight:600;color:#31C1FD}
 .card-cta svg{transition:transform .2s cubic-bezier(.2,.7,.1,1)}
 .card:hover .card-cta svg,.card:focus-visible .card-cta svg{transform:translateX(4px)}
 .site-footer-links{display:flex;gap:20px;flex-wrap:wrap}
@@ -64,5 +72,5 @@ a{color:#F5F5F7;text-decoration:none}a:hover{color:#FFFFFF}
 .legal h2{margin:48px 0 12px;font-size:24px;letter-spacing:-0.015em;font-weight:700;color:#F5F5F7}
 .legal p,.legal ul{margin:0 0 16px}
 .legal li{margin-bottom:8px}
-.legal a{color:#7DA2FF}
+.legal a{color:#31C1FD}
 .legal .effective{color:#A1A1A6;font-size:15px}

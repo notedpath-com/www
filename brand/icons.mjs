@@ -61,42 +61,50 @@ const DARK = { left: 358, top: 368, width: 1446, height: 320 };
 
 writeFileSync(join(BRAND, "lockup-black.png"), await sharp(join(BRAND, SHEET.file)).extract(DARK).png().toBuffer());
 
-// The light variant's transparency is a checkerboard painted into the pixels,
-// so it has to be keyed out. Nothing in the artwork is light or grey (the text
-// is black, the mark is saturated), which makes the key unambiguous:
-//   - black text blended with the checker loses lightness in proportion to it
-//   - the mark blended with the checker loses chroma in proportion to it
-// Take whichever says more coverage, then unblend to get the true colour back.
-const CHECKER = 237; // the darker of the two tones, 254 and 237, so both key to nothing
+// Neither variant ships with an alpha channel, so a cut-out has to be keyed
+// out of a flat background. That works because nothing in the artwork is grey:
+// the wordmark is pure black or pure white and the mark is saturated. So a
+// pixel's coverage is whichever is greater of how far its lightness has moved
+// from the background and how much chroma it carries. Then unblend to recover
+// the colour underneath.
+const CHECKER = 237; // the darker of the two checker tones, 254 and 237, so both key to nothing
 const MARK_CHROMA = 170; // just under the chroma of #31C1FD (204) and #34F0B1 (188)
-{
+
+async function knockout({ extract, onLight }) {
   const { data, info } = await sharp(join(BRAND, SHEET.file))
-    .extract(LIGHT).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    .extract(extract).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   for (let i = 0; i < data.length; i += 4) {
     const [r, g, b] = [data[i], data[i + 1], data[i + 2]];
-    const lightness = (r + g + b) / 3;
     const chroma = Math.max(r, g, b) - Math.min(r, g, b);
-    const alpha = Math.min(1, Math.max(0, Math.max((CHECKER - lightness) / CHECKER, chroma / MARK_CHROMA)));
+    const fromBackground = onLight
+      ? (CHECKER - (r + g + b) / 3) / CHECKER // dark ink on the light checker
+      : Math.max(r, g, b) / 255; //              light ink on black
+    const alpha = Math.min(1, Math.max(0, Math.max(fromBackground, chroma / MARK_CHROMA)));
     if (alpha <= 0.02) {
       data[i] = data[i + 1] = data[i + 2] = data[i + 3] = 0;
       continue;
     }
     for (let c = 0; c < 3; c++) {
-      data[i + c] = Math.min(255, Math.max(0, Math.round((data[i + c] - (1 - alpha) * CHECKER) / alpha)));
+      const base = onLight ? (1 - alpha) * CHECKER : 0;
+      data[i + c] = Math.min(255, Math.max(0, Math.round((data[i + c] - base) / alpha)));
     }
     data[i + 3] = Math.round(alpha * 255);
   }
-  writeFileSync(
-    join(BRAND, "lockup.png"),
-    await sharp(data, { raw: { width: info.width, height: info.height, channels: 4 } }).png().toBuffer(),
-  );
+  return sharp(data, { raw: { width: info.width, height: info.height, channels: 4 } }).png().toBuffer();
 }
 
-// The nav carries the whole lockup, on its own black, at 36px tall. Rendered
-// at 3x so it stays sharp on a dense display.
+// Black wordmark, for light surfaces.
+writeFileSync(join(BRAND, "lockup.png"), await knockout({ extract: LIGHT, onLight: true }));
+// White wordmark, for dark ones. The nav needs this: the header is see-through
+// at the top of the page, so a logo carrying its own black would sit there as
+// a visible rectangle.
+writeFileSync(join(BRAND, "lockup-on-dark.png"), await knockout({ extract: DARK, onLight: false }));
+
+// The nav carries the whole lockup at 36px tall, rendered at 3x so it stays
+// sharp on a dense display.
 writeFileSync(
   join(PUBLIC, "nav-logo.png"),
-  await sharp(join(BRAND, "lockup-black.png")).resize({ height: 108 }).png({ compressionLevel: 9 }).toBuffer(),
+  await sharp(join(BRAND, "lockup-on-dark.png")).resize({ height: 108 }).png({ compressionLevel: 9 }).toBuffer(),
 );
 
 console.log("icons written to public/, lockup split into brand/");

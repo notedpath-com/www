@@ -97,6 +97,29 @@ describe("works without JavaScript", () => {
     assert.ok(statSync(join(PUBLIC, "motion.js")).size < 4096, "motion.js is getting big");
   });
 
+  it("keeps the sticky header actually sticky on every page", () => {
+    // overflow-x:hidden computes the other axis to auto, which turns the
+    // wrapper into a scroll container. The header then sticks to that instead
+    // of the viewport, so it silently never sticks at all. clip does the same
+    // clipping without becoming one.
+    assert.match(read("styles.css"), /\.site-header\{position:sticky/);
+    for (const page of PAGES) {
+      const source = html(page);
+      assert.ok(source.includes("overflow-x: clip"), `${page.path} lost its clip`);
+      assert.doesNotMatch(source, /overflow[a-z-]*: hidden/);
+    }
+  });
+
+  it("keeps a backdrop behind the sticky header when the script never runs", () => {
+    // The header is see-through only while the script says the page is at the
+    // top. Without it, content would scroll under bare nav links.
+    const css = read("styles.css");
+    assert.match(css, /^\.site-header\{[^}]*background:rgba\(0,0,0,\.72\)/m);
+    for (const rule of css.split("\n").filter((line) => /\.site-header[^{]*\{[^}]*background:transparent/.test(line))) {
+      assert.match(rule, /^\.np-js /, `a bare header needs the script: ${rule}`);
+    }
+  });
+
   it("never hides the element the observer is watching", () => {
     // A zero-width clip rect makes IntersectionObserver report no
     // intersection, so a clipped target is never revealed at all.
@@ -219,7 +242,9 @@ describe("scroll animations", () => {
   });
 
   it("observes every element the reveal rules style", () => {
-    const styled = [...new Set([...css.matchAll(/^\.np-js \.([a-z-]+)[.:]/gm)].map((match) => match[1]))];
+    const styled = [...new Set(
+      [...css.matchAll(/^\.np-js \.([a-z-]+)(?:\.in|:not\(\.in\))/gm)].map((match) => match[1]),
+    )];
     assert.ok(styled.length > 0, "no reveal rules found");
     const observed = read("motion.js").match(/querySelectorAll\("([^"]+)"\)/)?.[1] ?? "";
     for (const name of styled) {
