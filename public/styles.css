@@ -55,8 +55,8 @@ a{color:#F5F5F7;text-decoration:none}a:hover{color:#FFFFFF}
 @media (prefers-reduced-motion: reduce){.np-anim *{animation:none !important}}
 .dot-still{display:none}
 @media (prefers-reduced-motion: reduce){.dot-moving{display:none}.dot-still{display:block}}
-.card{background:#111113;border:1px solid rgba(255,255,255,0.06);border-radius:28px;padding:32px;min-height:280px;box-sizing:border-box;display:flex;flex-direction:column;gap:20px;color:#F5F5F7;transition:border-color .2s}
-.card:hover,.card:focus-visible{border-color:rgba(255,255,255,0.28)}
+.card{background:#111113;border:1px solid rgba(255,255,255,0.06);border-radius:28px;padding:32px;min-height:280px;box-sizing:border-box;display:flex;flex-direction:column;gap:20px;color:#F5F5F7;transition:border-color .25s ease,box-shadow .25s ease}
+.card:hover,.card:focus-visible{border-color:rgba(49,193,253,0.55);box-shadow:0 0 0 1px rgba(49,193,253,0.30),0 0 32px rgba(49,193,253,0.22),inset 0 0 28px rgba(49,193,253,0.07)}
 .card-body{display:flex;flex-direction:column;gap:12px}
 .card-kind{margin:0;font-size:13px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:#A1A1A6}
 .card-name{margin:0;font-size:32px;line-height:1.1;letter-spacing:-0.025em;font-weight:700}
