@@ -1,5 +1,13 @@
 @font-face{font-family:'Inter';src:url('/fonts/inter-latin-wght-normal.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:swap}
 body{margin:0;background:#000}
+/* Two soft blue fields behind the page. They sit on the canvas background, so
+   the wrapper must stay transparent or it paints right over them. */
+.aurora{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.glow{position:absolute;display:block;border-radius:50%;will-change:transform}
+.g1{width:72vmax;height:72vmax;top:-26vmax;left:-22vmax;background:radial-gradient(circle closest-side,rgba(125,162,255,.20),rgba(125,162,255,0))}
+.g2{width:62vmax;height:62vmax;bottom:-26vmax;right:-22vmax;background:radial-gradient(circle closest-side,rgba(125,162,255,.13),rgba(125,162,255,0))}
+/* No lone word on a last line. The browser pulls one down instead. */
+p{text-wrap:pretty}
 a{color:#F5F5F7;text-decoration:none}a:hover{color:#FFFFFF}
 .np-anim .rise{animation:np-rise 1.2s cubic-bezier(.2,.7,.1,1) both}
 .np-anim .d1{animation-delay:.15s}.np-anim .d2{animation-delay:.4s}.np-anim .d3{animation-delay:.7s}.np-anim .d4{animation-delay:.95s}.np-anim .d5{animation-delay:1.2s}
@@ -8,28 +16,46 @@ a{color:#F5F5F7;text-decoration:none}a:hover{color:#FFFFFF}
 .np-anim .pop1{animation-delay:1.9s}.np-anim .pop2{animation-delay:2.7s}
 @keyframes np-rise{from{opacity:0;transform:translateY(40px);filter:blur(14px)}to{opacity:1;transform:none;filter:blur(0)}}
 @keyframes np-draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@keyframes np-wipe{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
 @keyframes np-pop{from{opacity:0;transform:scale(0)}to{opacity:1;transform:scale(1)}}
 @keyframes np-sv{from{opacity:0;transform:translateY(90px) scale(.94)}to{opacity:1;transform:none}}
 @keyframes np-light{from{color:#2C2C2E}to{color:#F5F5F7}}
-@keyframes np-zoom{from{opacity:0;transform:scale(1.35);letter-spacing:.04em}to{opacity:1;transform:none;letter-spacing:-.045em}}
+@keyframes np-zoom{from{opacity:0;transform:scale(1.35)}to{opacity:1;transform:none}}
 .pop{transform-box:fill-box;transform-origin:center}
-@supports (animation-timeline: view()){
-.np-anim .sv{animation:np-sv linear both;animation-timeline:view();animation-range:entry 5% cover 35%}
-.np-anim .light{animation:np-light linear both;animation-timeline:view();animation-range:entry 30% cover 50%}
-.np-anim .zoom{animation:np-zoom linear both;animation-timeline:view();animation-range:entry 0% cover 45%}
-/* The page ends here, so these can never scroll far enough to reach a cover range. */
-.np-anim #contact .sv,.np-anim #contact .zoom{animation-range:entry 0% entry 100%}
-}
+/* The connecting paths reveal themselves left to right as you scroll. The
+   animation runs on this wrapper and wipes it, rather than animating the
+   <path>'s own dash offset. The viewBox carries a 30 unit margin so the end
+   cap, its glow and the dot stay inside the box the wipe clips to. */
+.path-link{width:100%;max-width:1260px;margin:16px auto 0}
+.path-link svg{display:block;width:100%;height:auto;overflow:visible;filter:drop-shadow(0 0 14px #7DA2FF)}
+/* Revealed by motion.js, which adds np-js to the page and in to each element
+   as it arrives. Every rule here needs np-js, so with no script nothing is
+   ever hidden and the page simply renders finished.
+
+   The :not(.in) half matters as much as the animation: it holds each element
+   at its start state from load, while it is still far below the fold. Without
+   it an element scrolls into view fully drawn and then snaps back to the start
+   the instant the observer fires, which reads as a flicker on every element. */
+.np-js .sv:not(.in){opacity:0;transform:translateY(90px) scale(.94)}
+.np-js .light:not(.in){color:#2C2C2E}
+.np-js .zoom:not(.in){opacity:0;transform:scale(1.35)}
+.np-js .path-link:not(.in) svg{clip-path:inset(0 100% 0 0)}
+.np-js .sv.in{animation:np-sv .9s cubic-bezier(.2,.7,.1,1) both}
+.np-js .light.in{animation:np-light .7s linear both}
+.np-js .zoom.in{animation:np-zoom 1s cubic-bezier(.2,.7,.1,1) both}
+.np-js .path-link.in svg{animation:np-wipe 1.6s cubic-bezier(.4,0,.2,1) both}
 @media (prefers-reduced-motion: reduce){.np-anim *{animation:none !important}}
 .dot-still{display:none}
 @media (prefers-reduced-motion: reduce){.dot-moving{display:none}.dot-still{display:block}}
-.card{background:#111113;border:1px solid rgba(255,255,255,0.06);border-radius:28px;padding:40px;min-height:340px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;gap:40px;color:#F5F5F7;transition:border-color .2s}
+.card{background:#111113;border:1px solid rgba(255,255,255,0.06);border-radius:28px;padding:32px;min-height:280px;box-sizing:border-box;display:flex;flex-direction:column;gap:20px;color:#F5F5F7;transition:border-color .2s}
 .card:hover,.card:focus-visible{border-color:rgba(255,255,255,0.28)}
 .card-body{display:flex;flex-direction:column;gap:12px}
 .card-kind{margin:0;font-size:13px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:#A1A1A6}
 .card-name{margin:0;font-size:32px;line-height:1.1;letter-spacing:-0.025em;font-weight:700}
 .card-text{margin:0;font-size:17px;line-height:1.5;color:#A1A1A6}
-.card-host{margin:0;font-size:14px;color:#7DA2FF;overflow-wrap:anywhere}
+.card-cta{margin:auto 0 0;display:inline-flex;align-items:center;gap:7px;font-size:15px;font-weight:600;color:#7DA2FF}
+.card-cta svg{transition:transform .2s cubic-bezier(.2,.7,.1,1)}
+.card:hover .card-cta svg,.card:focus-visible .card-cta svg{transform:translateX(4px)}
 .site-footer-links{display:flex;gap:20px;flex-wrap:wrap}
 .site-footer-links a{color:#A1A1A6}
 .site-footer-links a:hover{color:#FFFFFF}

@@ -12,8 +12,12 @@ CSS with no build step and no JavaScript.
 
 ## Rules
 
-- **No JavaScript.** Pages must render and be crawlable without it. The only
-  `<script>` allowed is `application/ld+json` data.
+- **The page must not need JavaScript.** It has to render and be crawlable
+  without it. Script is allowed as enhancement only: deferred, self-hosted and
+  safe to never run. `public/motion.js` reveals the scroll artwork that way.
+  CSS scroll-driven animation (`animation-timeline`) is not an option here.
+  Firefox reports support for it and then does not drive it, which leaves every
+  reveal on the page frozen.
 - **No third-party requests.** Fonts and all other assets are self-hosted. The
   site sets no cookies, so it needs no cookie banner. If you add analytics,
   embeds, or remote fonts, update `public/privacy/index.html` and check whether

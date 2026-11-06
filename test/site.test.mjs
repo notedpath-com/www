@@ -68,10 +68,15 @@ function resolvesToFile(pathname) {
 
 describe("works without JavaScript", () => {
   for (const page of PAGES) {
-    it(`${page.path} has no executable script`, () => {
-      const scripts = html(page).match(/<script\b[^>]*>/g) ?? [];
-      const executable = scripts.filter((tag) => !tag.includes('type="application/ld+json"'));
-      assert.deepEqual(executable, []);
+    it(`${page.path} loads script only as an enhancement`, () => {
+      const scripts = (html(page).match(/<script\b[^>]*>/g) ?? [])
+        .filter((tag) => !tag.includes('type="application/ld+json"'));
+      for (const tag of scripts) {
+        // Deferred and same-origin, so it can neither block nor change the
+        // render a crawler receives.
+        assert.match(tag, /\sdefer\b/, `must be deferred: ${tag}`);
+        assert.match(tag, /\ssrc="\/[^"]+"/, `must be a local file: ${tag}`);
+      }
     });
 
     it(`${page.path} has no inline event handlers`, () => {
@@ -83,9 +88,38 @@ describe("works without JavaScript", () => {
     });
   }
 
-  it("keeps the runtime out of the published folder", () => {
-    const javascript = filesUnder(PUBLIC).filter((file) => file.endsWith(".js"));
-    assert.deepEqual(javascript, []);
+  it("ships no script beyond the one enhancement", () => {
+    const names = filesUnder(PUBLIC)
+      .filter((file) => file.endsWith(".js"))
+      .map((file) => file.slice(PUBLIC.length + 1));
+    assert.deepEqual(names, ["motion.js"]);
+    // Decoration, not an app: small enough that anyone can read all of it.
+    assert.ok(statSync(join(PUBLIC, "motion.js")).size < 4096, "motion.js is getting big");
+  });
+
+  it("never hides the element the observer is watching", () => {
+    // A zero-width clip rect makes IntersectionObserver report no
+    // intersection, so a clipped target is never revealed at all.
+    const css = read("styles.css");
+    const clipping = css.split("\n")
+      .filter((line) => line.includes("clip-path:inset(0 100%") && !line.startsWith("@keyframes"));
+    assert.ok(clipping.length > 0, "no resting clip rule found");
+    for (const rule of clipping) {
+      assert.match(rule, /\bsvg\{/, `clip the child, not the observed element: ${rule}`);
+    }
+  });
+
+  it("leaves the page finished when the script never runs", () => {
+    // The reveal rules are the only thing that can hide content, and every one
+    // of them needs np-js, which only the script adds.
+    const css = read("styles.css");
+    const reveals = css.split("\n").filter((line) =>
+      /\.(sv|light|zoom|path-link)[^{]*\{/.test(line) && /animation:|opacity:0|clip-path:/.test(line));
+    assert.ok(reveals.length > 0, "no reveal rules found");
+    for (const rule of reveals) {
+      assert.match(rule, /^\.np-js /, `reveal rule must require the script: ${rule}`);
+    }
+    assert.match(read("motion.js"), /prefers-reduced-motion: reduce/);
   });
 
   it("puts the real content in the HTML that crawlers receive", () => {
@@ -132,9 +166,64 @@ describe("projects", () => {
     assert.deepEqual(cards, PROJECTS);
   });
 
+  it("every card ends with a call to action, not a bare URL", () => {
+    const ctas = [...home.matchAll(/<p class="card-cta">\s*([^<\n]+)/g)].map((match) => match[1].trim());
+    assert.deepEqual(ctas, PROJECTS.map(() => "Check it out"));
+    for (const [url] of PROJECTS) {
+      assert.ok(!home.includes(`>${new URL(url).host}<`), `still printing the URL for ${url}`);
+    }
+  });
+
   it("has no card left from the mockup", () => {
     for (const text of ["Practice that adapts to you.", "Apps that respect your time.", "Less paperwork, more life."]) {
       assert.ok(!home.includes(text), `stale copy: ${text}`);
+    }
+  });
+});
+
+
+describe("scroll animations", () => {
+  const home = html(PAGES[0]);
+  const css = read("styles.css");
+
+  it("keeps the page wrapper transparent so the aurora behind it shows", () => {
+    // The aurora sits at z-index -1, which paints under any background on an
+    // in-flow ancestor. A background here makes it silently invisible.
+    const wrapper = home.match(/<div class="np-anim" style="([^"]*)"/)?.[1];
+    assert.ok(wrapper, "missing the animation wrapper");
+    assert.doesNotMatch(wrapper, /background/);
+    assert.match(css, /body\{[^}]*background:#000/);
+  });
+
+  it("hides every decorative graphic from screen readers", () => {
+    for (const tag of home.match(/<svg\b[^>]*>/g) ?? []) {
+      assert.ok(tag.includes('aria-hidden="true"'), `needs aria-hidden: ${tag.slice(0, 60)}`);
+    }
+    assert.match(home, /<div class="aurora" aria-hidden="true">/);
+  });
+
+  it("leaves the drawn paths finished when nothing animates them", () => {
+    // No script, or reduced motion, means no animation at all, so the resting
+    // state of a path has to be the fully revealed one.
+    assert.match(css, /@keyframes np-wipe\{.*?to\{clip-path:inset\(0 0 0 0\)\}\}/);
+    assert.doesNotMatch(css, /^\.path-link\{[^}]*clip-path/m);
+    assert.match(css, /@media \(prefers-reduced-motion: reduce\)\{\.np-anim \*\{animation:none !important\}\}/);
+  });
+
+  it("relies on no scroll-driven CSS", () => {
+    // Firefox reports support for animation-timeline and then does not drive
+    // it, which left every reveal on this page frozen. The observer replaced
+    // all of it; bringing it back would silently break the page there again.
+    assert.doesNotMatch(css, /animation-timeline/);
+    assert.doesNotMatch(css, /animation-range/);
+  });
+
+  it("observes every element the reveal rules style", () => {
+    const styled = [...new Set([...css.matchAll(/^\.np-js \.([a-z-]+)[.:]/gm)].map((match) => match[1]))];
+    assert.ok(styled.length > 0, "no reveal rules found");
+    const observed = read("motion.js").match(/querySelectorAll\("([^"]+)"\)/)?.[1] ?? "";
+    for (const name of styled) {
+      assert.ok(observed.includes(`.${name}`), `${name} is styled but never observed`);
     }
   });
 });
@@ -149,12 +238,6 @@ describe("contact and legal links", () => {
       assert.ok(footer.includes("Noted Path LLC"));
     });
   }
-
-  it("the contact section finishes its scroll reveal before the page ends", () => {
-    // A "cover" range needs more scroll than the last section has, which left
-    // the button dim at the bottom of the page.
-    assert.match(read("styles.css"), /#contact \.sv,\.np-anim #contact \.zoom\{animation-range:entry 0% entry 100%\}/);
-  });
 
   it("the Say hello button opens an email, not the section it is in", () => {
     assert.match(html(PAGES[0]), new RegExp(`href="mailto:${EMAIL}"[^>]*>Say hello`));
